@@ -1,28 +1,23 @@
 import { useEffect, useState } from "react"
+import Footer from "../components/Footer"
+import Layout from "../components/Layout"
 import Product from "../components/Product"
+import { initMongoose } from "../lib/mongoose"
+import { findAllProducts } from "./api/products"
 
-export default function Home() {
 
-  const [productsInfo, setProductsInfo] = useState([])
+export default function Home({products}) {
+
   const [pesquisa, setPesquisa] = useState('')
 
-  const categoriesNames = [...new Set(productsInfo.map(p => p.category))]
+  const categoriesNames = [...new Set(products.map(p => p.category))]
 
-  useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(json => setProductsInfo(json))
-  }, [])
-
-  let products;
   if (pesquisa) {
-    products = productsInfo.filter(p => p.name.toLowerCase().includes(pesquisa))
-  } else {
-    products = productsInfo
+    products = products.filter(p => p.name.toLowerCase().includes(pesquisa))
   }
 
   return (
-    <div className="p-5">
+    <Layout>
       <input value={pesquisa} onChange={e => setPesquisa(e.target.value)} type="text" placeholder="Procurar produtos..." className="bg-gray-100 w-full py-2 px-4 rounded-xl" />
       <div>
         {categoriesNames.map(category => (
@@ -44,16 +39,18 @@ export default function Home() {
         <div className="py-4">
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }
 
 export async function getServerSideProps() {
   await initMongoose()
 
+  const products = await findAllProducts()
+
   return {
     props: {
-      products: []
+      products: JSON.parse(JSON.stringify(products)),
     }
   }
 }
